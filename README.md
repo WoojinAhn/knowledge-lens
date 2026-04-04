@@ -5,7 +5,15 @@ Analyze markdown-based knowledge files in a repository.
 ## Install
 
 ```bash
+# from npm (not yet published)
 npm install -g knowledge-lens
+
+# from source
+git clone https://github.com/WoojinAhn/knowledge-lens.git
+cd knowledge-lens
+npm install
+npm run build
+npm link       # registers 'lens' command globally
 ```
 
 ## Usage
