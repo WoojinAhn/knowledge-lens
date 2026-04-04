@@ -169,7 +169,7 @@ Terminal output example:
       {
         "path": "README.md",
         "headings": ["# my-project", "## Install", "## Usage"],
-        "links": { "internal": 3, "external": 2 },
+        "internalLinks": 3,
         "frontmatter": null
       }
     ],
