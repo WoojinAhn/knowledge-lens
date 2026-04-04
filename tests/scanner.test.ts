@@ -3,6 +3,7 @@ import { scan } from "../src/scanner.js";
 import { resolve } from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { writeFile, mkdir, rm } from "fs/promises";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = resolve(__dirname, "fixtures");
@@ -43,5 +44,20 @@ describe("scanner", () => {
     });
     const hasClaude = files.some((f) => f.includes(".claude"));
     expect(hasClaude).toBe(false);
+  });
+
+  it("respects .lensignore patterns", async () => {
+    const tempDir = resolve(fixturesDir, "lensignore-test");
+    await mkdir(resolve(tempDir, "docs/generated"), { recursive: true });
+    await writeFile(resolve(tempDir, "README.md"), "# Test\n");
+    await writeFile(resolve(tempDir, "docs/generated/spec.md"), "# Spec\n");
+    await writeFile(resolve(tempDir, ".lensignore"), "docs/generated/\n");
+
+    const files = await scan(tempDir, { claude: false });
+    const relative = files.map((f) => f.replace(/\\/g, "/"));
+    expect(relative).toContain("README.md");
+    expect(relative).not.toContain("docs/generated/spec.md");
+
+    await rm(tempDir, { recursive: true });
   });
 });

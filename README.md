@@ -67,6 +67,17 @@ Includes `.claude/notes.md` and Claude Code memory files (`~/.claude/projects/<r
 | `-h, --help` | Show help |
 | `-v, --version` | Show version |
 
+## .lensignore
+
+Create a `.lensignore` file in your project root to exclude paths from scanning. Uses `.gitignore` syntax.
+
+```
+docs/superpowers/
+drafts/
+```
+
+Directories like `node_modules/`, `.git/`, `dist/`, `tests/` are excluded by default.
+
 ## v1 Scope
 
 - Structure map (file tree + metadata)
