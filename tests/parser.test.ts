@@ -64,6 +64,33 @@ describe("parser", () => {
     expect(result.frontmatter).toBeNull();
   });
 
+  it("ignores links inside code blocks", async () => {
+    const tempDir = resolve(fixturesDir, "parser-temp");
+    await mkdir(tempDir, { recursive: true });
+    const tempFile = resolve(tempDir, "codeblock.md");
+    await writeFile(
+      tempFile,
+      "# Doc\n\n[real](./real.md)\n\n```markdown\n[fake](./fake.md)\n```\n"
+    );
+    const result = await parseFile(tempFile, "codeblock.md");
+    const targets = result.links.map((l) => l.target);
+    expect(targets).toContain("./real.md");
+    expect(targets).not.toContain("./fake.md");
+  });
+
+  it("ignores headings inside code blocks", async () => {
+    const tempDir = resolve(fixturesDir, "parser-temp");
+    await mkdir(tempDir, { recursive: true });
+    const tempFile = resolve(tempDir, "codeblock-heading.md");
+    await writeFile(
+      tempFile,
+      "# Real Heading\n\n```markdown\n# Fake Heading\n```\n"
+    );
+    const result = await parseFile(tempFile, "codeblock-heading.md");
+    expect(result.headings).toContain("# Real Heading");
+    expect(result.headings).not.toContain("# Fake Heading");
+  });
+
   it("distinguishes internal and external links", async () => {
     const tempDir = resolve(fixturesDir, "parser-temp");
     await mkdir(tempDir, { recursive: true });

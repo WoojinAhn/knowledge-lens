@@ -7,6 +7,9 @@ const EXCLUDED_DIRS = new Set([
   "dist",
   "build",
   "vendor",
+  "tests",
+  "test",
+  "__tests__",
 ]);
 
 interface ScanOptions {

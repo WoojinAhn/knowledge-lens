@@ -25,6 +25,7 @@ export async function parseFile(
 function extractHeadings(lines: string[]): string[] {
   const headings: string[] = [];
   let inFrontmatter = false;
+  let inCodeBlock = false;
 
   for (const line of lines) {
     if (line.trim() === "---") {
@@ -32,6 +33,12 @@ function extractHeadings(lines: string[]): string[] {
       continue;
     }
     if (inFrontmatter) continue;
+
+    if (line.trimStart().startsWith("```")) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    if (inCodeBlock) continue;
 
     const match = line.match(/^(#{1,6})\s+(.+)/);
     if (match) {
@@ -48,6 +55,7 @@ function isExternalLink(target: string): boolean {
 function extractLinks(lines: string[]): ParsedLink[] {
   const links: ParsedLink[] = [];
   let inFrontmatter = false;
+  let inCodeBlock = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -58,10 +66,19 @@ function extractLinks(lines: string[]): ParsedLink[] {
     }
     if (inFrontmatter) continue;
 
+    if (line.trimStart().startsWith("```")) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    if (inCodeBlock) continue;
+
+    // Strip inline code spans before extracting links
+    const lineWithoutCode = line.replace(/`[^`]+`/g, "");
+
     // Inline links: [text](target)
     const inlineRegex = /\[([^\]]*)\]\(([^)]+)\)/g;
     let match;
-    while ((match = inlineRegex.exec(line)) !== null) {
+    while ((match = inlineRegex.exec(lineWithoutCode)) !== null) {
       const target = match[2].split("#")[0].trim(); // strip anchor
       if (target && !isExternalLink(target)) {
         links.push({ target, line: i + 1, type: "inline" });
@@ -69,7 +86,7 @@ function extractLinks(lines: string[]): ParsedLink[] {
     }
 
     // Reference link definitions: [ref]: target
-    const refMatch = line.match(/^\[([^\]]+)\]:\s+(\S+)/);
+    const refMatch = lineWithoutCode.match(/^\[([^\]]+)\]:\s+(\S+)/);
     if (refMatch) {
       const target = refMatch[2].split("#")[0].trim();
       if (target && !isExternalLink(target)) {
