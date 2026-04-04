@@ -13,4 +13,7 @@ Scans .md files and .claude/ knowledge files, then diagnoses structure, link hea
 
 ## Tech Stack
 
-TBD — to be decided during implementation planning.
+- TypeScript (ESM, Node 18+)
+- chalk (terminal formatting)
+- gray-matter (frontmatter parsing)
+- vitest (testing)

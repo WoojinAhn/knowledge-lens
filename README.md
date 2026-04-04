@@ -1,31 +1,69 @@
 # knowledge-lens
 
-Analyze and diagnose all markdown-based knowledge in a repository.
+Analyze markdown-based knowledge files in a repository.
+
+## Install
+
+```bash
+npm install -g knowledge-lens
+```
+
+## Usage
+
+```bash
+lens                        # scan current directory
+lens ./my-project           # scan specific path
+lens . --json               # JSON output
+lens . --claude             # include .claude/ files
+lens . --claude --json      # both
+```
 
 ## What it does
 
-Scans all `.md` files and `.claude/` knowledge files in a repo, then provides:
+### Structure Map
 
-- **Structure map**: Hierarchical view of all markdown files and their relationships
-- **Link analysis**: Internal cross-references, orphan documents, broken links between .md files
-- **Duplicate detection**: Content overlap between files
-- **Recommendations**: Merge candidates, missing links, skill-ification suggestions
+Shows all `.md` files with metadata (link count, heading count, frontmatter type).
 
-## Scan targets
+```
+Structure Map
+----------------------------------------
+  README.md (2 links, 3 headings)
+  CLAUDE.md (5 links, 4 headings)
+  docs/architecture.md (8 links, 6 headings)
+```
 
-| Source | Description |
+### Link Analysis
+
+Detects broken internal links and orphan files.
+
+```
+Link Analysis
+----------------------------------------
+  18 valid links
+  2 broken links
+     CLAUDE.md:8 -> ./docs/setup.md (file not found)
+  1 orphan files
+     docs/old-notes.md (not referenced anywhere)
+```
+
+### `--claude` mode
+
+Includes `.claude/notes.md` and Claude Code memory files (`~/.claude/projects/<repo>/memory/`) in the analysis.
+
+## Options
+
+| Option | Description |
 |--------|-------------|
-| `*.md` (repo root & subdirs) | CLAUDE.md, README, knowledge files, guides, etc. |
-| `.claude/notes.md` | Out-of-scope findings log |
-| `.claude/projects/*/memory/` | Auto memory files + MEMORY.md index |
-| `~/.claude/CLAUDE.md` | (optional) Global instructions |
-| `~/.claude/projects/*/memory/` | (optional) Global memory |
+| `--json` | Output as JSON (for agent consumption) |
+| `--claude` | Include .claude/ directory in scan |
+| `-h, --help` | Show help |
+| `-v, --version` | Show version |
 
-## Scope
+## v1 Scope
 
-- **v1**: .md files only, internal link relationships
-- **v2**: External references (URLs, scripts), deeper semantic analysis
+- Structure map (file tree + metadata)
+- Internal link analysis (valid, broken, orphan)
 
-## Status
+## License
 
-Early development.
+MIT
