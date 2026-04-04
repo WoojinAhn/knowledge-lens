@@ -85,8 +85,10 @@ async function main(): Promise<void> {
     return;
   }
 
+  const version = await getVersion();
+
   if (options.version) {
-    console.log(await getVersion());
+    console.log(version);
     return;
   }
 
@@ -97,7 +99,6 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Scan
   const filePaths = await scan(rootPath, { claude: options.claude });
 
   if (filePaths.length === 0) {
@@ -105,20 +106,17 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Parse
   const parsedFiles = await Promise.all(
     filePaths.map((relativePath) =>
       parseFile(resolve(rootPath, relativePath), relativePath)
     )
   );
 
-  // Analyze
   const structure = analyzeStructure(parsedFiles);
-  const links = analyzeLinks(parsedFiles, rootPath);
+  const links = await analyzeLinks(parsedFiles, rootPath);
 
-  // Build result
   const result: AnalysisResult = {
-    version: await getVersion(),
+    version,
     scannedAt: new Date().toISOString(),
     root: options.path,
     options: { claude: options.claude },
@@ -132,7 +130,6 @@ async function main(): Promise<void> {
     },
   };
 
-  // Format and output
   if (options.json) {
     console.log(formatJson(result));
   } else {

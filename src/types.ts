@@ -23,7 +23,6 @@ export interface ParsedFile {
 export interface StructureEntry {
   path: string;
   internalLinks: number;
-  externalLinks: number;
   headings: number;
   frontmatter: Record<string, unknown> | null;
 }

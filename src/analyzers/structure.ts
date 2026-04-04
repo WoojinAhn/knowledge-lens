@@ -4,7 +4,6 @@ export function analyzeStructure(files: ParsedFile[]): StructureResult {
   const entries: StructureEntry[] = files.map((file) => ({
     path: file.path,
     internalLinks: file.links.length,
-    externalLinks: 0,
     headings: file.headings.length,
     frontmatter: file.frontmatter,
   }));

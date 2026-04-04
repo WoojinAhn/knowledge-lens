@@ -1,5 +1,5 @@
-import { existsSync } from "fs";
-import { resolve, dirname, normalize } from "path";
+import { access } from "fs/promises";
+import { resolve, dirname, normalize, basename } from "path";
 import type {
   ParsedFile,
   LinksResult,
@@ -17,10 +17,19 @@ const WELL_KNOWN_FILES = new Set([
   "memory.md",
 ]);
 
-export function analyzeLinks(
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function analyzeLinks(
   files: ParsedFile[],
   rootPath: string
-): LinksResult {
+): Promise<LinksResult> {
   const valid: ValidLink[] = [];
   const broken: BrokenLink[] = [];
 
@@ -35,10 +44,12 @@ export function analyzeLinks(
         fileDir === "." ? link.target : `${fileDir}/${link.target}`
       );
 
-      const resolvedAbsolute = resolve(rootPath, resolvedRelative);
       const source = `${file.path}:${link.line}`;
 
-      if (filePathSet.has(resolvedRelative) || existsSync(resolvedAbsolute)) {
+      if (
+        filePathSet.has(resolvedRelative) ||
+        (await fileExists(resolve(rootPath, resolvedRelative)))
+      ) {
         valid.push({ source, target: link.target, status: "ok" });
         referencedFiles.add(resolvedRelative);
       } else {
@@ -49,11 +60,10 @@ export function analyzeLinks(
 
   const orphans: OrphanFile[] = [];
   for (const file of files) {
-    const normalized = normalize(file.path);
-    const basename = file.path.split("/").pop()?.toLowerCase() ?? "";
+    const name = basename(file.path).toLowerCase();
 
-    if (WELL_KNOWN_FILES.has(basename)) continue;
-    if (referencedFiles.has(normalized)) continue;
+    if (WELL_KNOWN_FILES.has(name)) continue;
+    if (referencedFiles.has(normalize(file.path))) continue;
 
     orphans.push({
       path: file.path,

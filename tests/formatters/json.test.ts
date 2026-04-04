@@ -13,14 +13,14 @@ const mockResult: AnalysisResult = {
       {
         path: "README.md",
         internalLinks: 1,
-        externalLinks: 0,
+
         headings: 2,
         frontmatter: null,
       },
       {
         path: "CLAUDE.md",
         internalLinks: 0,
-        externalLinks: 0,
+
         headings: 1,
         frontmatter: null,
       },

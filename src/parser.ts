@@ -2,16 +2,41 @@ import { readFile } from "fs/promises";
 import matter from "gray-matter";
 import type { ParsedFile, ParsedLink } from "./types.js";
 
+interface ContentLine {
+  text: string;
+  lineNumber: number;
+}
+
+function getContentLines(rawContent: string): ContentLine[] {
+  const lines = rawContent.split("\n");
+  const result: ContentLine[] = [];
+  let inCodeBlock = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (line.trimStart().startsWith("```")) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    if (inCodeBlock) continue;
+
+    result.push({ text: line, lineNumber: i + 1 });
+  }
+
+  return result;
+}
+
 export async function parseFile(
   absolutePath: string,
   relativePath: string
 ): Promise<ParsedFile> {
-  const content = await readFile(absolutePath, "utf-8");
-  const { data: frontmatter, content: body } = matter(content);
+  const raw = await readFile(absolutePath, "utf-8");
+  const { data: frontmatter, content: body } = matter(raw);
 
-  const lines = content.split("\n");
-  const headings = extractHeadings(lines);
-  const links = extractLinks(lines);
+  const contentLines = getContentLines(body);
+  const headings = extractHeadings(contentLines);
+  const links = extractLinks(contentLines);
 
   return {
     path: relativePath,
@@ -22,27 +47,13 @@ export async function parseFile(
   };
 }
 
-function extractHeadings(lines: string[]): string[] {
+function extractHeadings(lines: ContentLine[]): string[] {
   const headings: string[] = [];
-  let inFrontmatter = false;
-  let inCodeBlock = false;
 
-  for (const line of lines) {
-    if (line.trim() === "---") {
-      inFrontmatter = !inFrontmatter;
-      continue;
-    }
-    if (inFrontmatter) continue;
-
-    if (line.trimStart().startsWith("```")) {
-      inCodeBlock = !inCodeBlock;
-      continue;
-    }
-    if (inCodeBlock) continue;
-
-    const match = line.match(/^(#{1,6})\s+(.+)/);
+  for (const { text } of lines) {
+    const match = text.match(/^(#{1,6})\s+(.+)/);
     if (match) {
-      headings.push(line.trim());
+      headings.push(text.trim());
     }
   }
   return headings;
@@ -52,45 +63,26 @@ function isExternalLink(target: string): boolean {
   return /^https?:\/\//.test(target) || target.startsWith("mailto:");
 }
 
-function extractLinks(lines: string[]): ParsedLink[] {
+function extractLinks(lines: ContentLine[]): ParsedLink[] {
   const links: ParsedLink[] = [];
-  let inFrontmatter = false;
-  let inCodeBlock = false;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  for (const { text, lineNumber } of lines) {
+    const clean = text.replace(/`[^`]+`/g, "");
 
-    if (line.trim() === "---") {
-      inFrontmatter = !inFrontmatter;
-      continue;
-    }
-    if (inFrontmatter) continue;
-
-    if (line.trimStart().startsWith("```")) {
-      inCodeBlock = !inCodeBlock;
-      continue;
-    }
-    if (inCodeBlock) continue;
-
-    // Strip inline code spans before extracting links
-    const lineWithoutCode = line.replace(/`[^`]+`/g, "");
-
-    // Inline links: [text](target)
     const inlineRegex = /\[([^\]]*)\]\(([^)]+)\)/g;
     let match;
-    while ((match = inlineRegex.exec(lineWithoutCode)) !== null) {
-      const target = match[2].split("#")[0].trim(); // strip anchor
+    while ((match = inlineRegex.exec(clean)) !== null) {
+      const target = match[2].split("#")[0].trim();
       if (target && !isExternalLink(target)) {
-        links.push({ target, line: i + 1, type: "inline" });
+        links.push({ target, line: lineNumber, type: "inline" });
       }
     }
 
-    // Reference link definitions: [ref]: target
-    const refMatch = lineWithoutCode.match(/^\[([^\]]+)\]:\s+(\S+)/);
+    const refMatch = clean.match(/^\[([^\]]+)\]:\s+(\S+)/);
     if (refMatch) {
       const target = refMatch[2].split("#")[0].trim();
       if (target && !isExternalLink(target)) {
-        links.push({ target, line: i + 1, type: "reference" });
+        links.push({ target, line: lineNumber, type: "reference" });
       }
     }
   }
