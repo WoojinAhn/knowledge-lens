@@ -4,7 +4,7 @@
 
 knowledge-lens: a CLI tool that analyzes all markdown-based knowledge files in a repository.
 
-Scans .md files and .claude/ knowledge files, then diagnoses structure, link health, duplicates, and provides optimization recommendations.
+Scans .md files and .claude/ knowledge files, then diagnoses structure and link health. Supports `.lensignore` for project-specific exclusions.
 
 ## Context
 
