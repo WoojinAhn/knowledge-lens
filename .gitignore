@@ -4,3 +4,4 @@ dist/
 .claude/
 !tests/fixtures/**/.claude/
 tests/fixtures/parser-temp/
+.Codex/notes.md

@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import type { AnalysisResult } from "../types.js";
+import { buildRecommendations } from "../recommendations.js";
 
 export function formatTerminal(result: AnalysisResult): string {
   const lines: string[] = [];
@@ -55,6 +56,16 @@ export function formatTerminal(result: AnalysisResult): string {
     result.links.orphans.length === 0
   ) {
     lines.push(chalk.green("  All clear - no broken links or orphan files."));
+  }
+
+  const recommendations = buildRecommendations(result);
+  if (recommendations.length > 0) {
+    lines.push("");
+    lines.push(chalk.bold("Recommended Actions"));
+    lines.push(chalk.dim("-".repeat(40)));
+    for (const recommendation of recommendations) {
+      lines.push(`  - ${recommendation}`);
+    }
   }
 
   lines.push("");
